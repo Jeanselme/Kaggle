@@ -11,3 +11,6 @@ There are 32 x 32 pixels images in color. The goal is to classify them into 10 c
 ## Resuls
 ### knn
 The knn method gives about 10 % of accuracy on the test data.
+
+### logistic regression - One vs all
+It gives 20 %.

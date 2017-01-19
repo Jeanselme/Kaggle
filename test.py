@@ -6,6 +6,7 @@
 
 import dataManipulation
 from utils.distances import *
+from utils.error import *
 import model.knn
 import model.oneVsAll
 import model.logistic
@@ -24,8 +25,10 @@ data, label = dataManipulation.shuffleDataLabel(data, labels)
 trainData, trainLabels = data[:length], labels[:length]
 testData, testLabels = data[length:], labels[length:]
 
+"""
+# KNN
 print("Test knn classifier - Kernel - 5")
-knn = model.knn.ClassifierKNN(distanceKernelPoly, 5)
+knn = model.knn.ClassifierKNN(distanceKernelPoly, nearestNeighbor=5)
 knn.train(trainData, trainLabels, testData, testLabels)
 
 print("Test knn classifier - Euclidean - 3")
@@ -35,3 +38,9 @@ knn.train(trainData, trainLabels, testData, testLabels)
 print("Test knn classifier - distanceKernelRBS - 5")
 knn = model.knn.ClassifierKNN(distance, 5)
 knn.train(trainData, trainLabels, testData, testLabels)
+"""
+
+# Logistic regression
+print("Test one vs all logistic regression")
+ova = model.oneVsAll.oneVsAll(model.logistic.ClassifierLogistic, error=logisticLoss, errorGrad=logisticGrad)
+ova.train(trainData, trainLabels, testData, testLabels)
