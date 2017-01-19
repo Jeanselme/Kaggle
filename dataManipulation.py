@@ -8,9 +8,9 @@ import numpy as np
 import scipy.misc
 
 # Extract labels and data
-def extractPicturesFromCSV(csvFile, reshape = False):
+def extractPicturesFromCSV(csvFile):
 	"""
-	Returns a list of matrix images, reshape to a linear shape if reshape = True
+	Returns a list of matrix images
 	"""
 	# Reads file
 	data = pandas.read_csv(csvFile, header=None).as_matrix()
@@ -21,10 +21,6 @@ def extractPicturesFromCSV(csvFile, reshape = False):
 	# Changes the data
 	for row in range(len(data)):
 		pic = fromVecToPic(data[row])
-		if reshape:
-			pic = pic.flatten()
-			# To avoid numpy error of shape
-			pic = pic.reshape((len(pic),1))
 		pictures.append(pic)
 
 	return np.array(pictures)
@@ -74,7 +70,7 @@ def binaryArrayFromLabel(labelsArray):
 	# Computes the size of the label array
 	labelMax = np.max(labelsArray)
 	labelMin = np.min(labelsArray)
-	size = labelMax - labelMin
+	size = labelMax - labelMin + 1
 
 	for label in labelsArray:
 		binaryArray = np.zeros((size,1))
@@ -83,8 +79,21 @@ def binaryArrayFromLabel(labelsArray):
 
 	return np.array(res)
 
+# Manipulation on images
+def flattenImages(imagesArray):
+	"""
+	Flatten images into 1D array
+	"""
+	res = []
 
-# To display images and manipulates
+	for image in imagesArray:
+		image = image.copy().flatten()
+		# To avoid numpy error of shape
+		image = image.reshape((len(image),1))
+		res.append(image)
+
+	return np.array(res)
+
 def displayPicture(image):
 	scipy.misc.imshow(image)
 
