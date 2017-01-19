@@ -24,6 +24,14 @@ data, label = dataManipulation.shuffleDataLabel(data, labels)
 trainData, trainLabels = data[:length], labels[:length]
 testData, testLabels = data[length:], labels[length:]
 
-print("Test knn classifier")
+print("Test knn classifier - Kernel - 5")
 knn = model.knn.ClassifierKNN(distanceKernelPoly, 5)
+knn.train(trainData, trainLabels, testData, testLabels)
+
+print("Test knn classifier - Euclidean - 3")
+knn = model.knn.ClassifierKNN(distance, 3)
+knn.train(trainData, trainLabels, testData, testLabels)
+
+print("Test knn classifier - distanceKernelRBS - 5")
+knn = model.knn.ClassifierKNN(distance, 5)
 knn.train(trainData, trainLabels, testData, testLabels)

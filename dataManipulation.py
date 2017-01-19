@@ -60,9 +60,9 @@ def changeLabels(labelsArray, label):
 	Transforms the labels into a binary array with class = +1 if label=i -1 otherwise
 	"""
 	# Copies data
-	res = data.copy()
+	res = labelsArray.copy()
 	# Changes value
-	ko, ok = res != value, res == value
+	ko, ok = res != label, res == label
 	res[ko],res[ok] = -1, 1
 	return res
 
