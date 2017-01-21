@@ -6,6 +6,7 @@
 
 import dataManipulation
 from model.classifier import Classifier
+import numpy as np
 
 class oneVsAll(Classifier):
 	"""
@@ -24,7 +25,7 @@ class oneVsAll(Classifier):
 		"""
 		Forecasts the output given the data
 		"""
-		return argmax([modeli.predict(data, **kwargs) for modeli in self.trainModels])
+		return np.argmax([modeli.predict(data, **self.args) for modeli in self.trainModels])
 
 	def train(self, trainData, trainLabels, testData = None, testLabels=None, **kwargs):
 		"""
@@ -41,6 +42,6 @@ class oneVsAll(Classifier):
 			testLabelsi = dataManipulation.changeLabels(testLabels, label=i)
 			# Trains the new model
 			modeli.train(trainData, trainLabelsi, testData, testLabels, **kwargs)
-			trainModels.add(modeli)
+			self.trainModels.append(modeli)
 
-		test(testData, testLabels)
+		self.test(testData, testLabels)

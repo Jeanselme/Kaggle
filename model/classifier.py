@@ -31,7 +31,8 @@ class Classifier:
 				if testLabels is not None and res == testLabels[i]:
 					recognized += 1
 
-			print("Total of correct forecasts : " + str(recognized) + " / " + str(len(testData)))
+			if testLabels is not None:
+				print("Total of correct forecasts : " + str(recognized) + " / " + str(len(testData)))
 
 			if save is not None:
 				dataManipulation.saveLabelsToCsv(output, save)
