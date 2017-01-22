@@ -23,21 +23,24 @@ class ClassifierKNN(Classifier):
 		"""
 		Forecasts the output given the data
 		"""
-		# Computes the ditance to each data point
-		distances = [self.distance(data, trainD) for trainD in self.trainData]
-		labelDistance = list(zip(self.trainLabels, distances))
+		if self.trainData is None:
+			print("Train before predict")
+		else:
+			# Computes the ditance to each data point
+			distances = [self.distance(data, trainD) for trainD in self.trainData]
+			labelDistance = list(zip(self.trainLabels, distances))
 
-		# Sorts it by distance
-		labelDistance.sort(key=lambda x: x[1])
-		neightbor = [0] * (max(self.trainLabels) - min(self.trainLabels) + 1)
+			# Sorts it by distance
+			labelDistance.sort(key=lambda x: x[1])
+			neightbor = [0] * (max(self.trainLabels) - min(self.trainLabels) + 1)
 
-		for j in labelDistance:
-			if max(neightbor) < self.nearestNeighbor :
-				neightbor[j[0]] += 1
-			else :
-				break
+			for j in labelDistance:
+				if max(neightbor) < self.nearestNeighbor :
+					neightbor[j[0]] += 1
+				else :
+					break
 
-		return np.argmax(neightbor) + min(self.trainLabels)
+			return np.argmax(neightbor) + min(self.trainLabels)
 
 	def train(self,trainData, trainLabels, testData = None, testLabels=None):
 		"""
