@@ -41,7 +41,8 @@ class oneVsAll(Classifier):
 			trainLabelsi = dataManipulation.changeLabels(trainLabels, label=i)
 			testLabelsi = dataManipulation.changeLabels(testLabels, label=i)
 			# Trains the new model
-			modeli.train(trainData, trainLabelsi, testData, testLabels, **kwargs)
+			modeli.train(trainData, trainLabelsi, testData, testLabelsi, **kwargs)
+			modeli.test(testData, testLabelsi)
 			self.trainModels.append(modeli)
 
 		self.test(testData, testLabels)
