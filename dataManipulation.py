@@ -4,11 +4,12 @@
 	vincent.jeanselme@gmail.com
 """
 import pandas
+import collections
 import numpy as np
 import scipy.misc
 
 # Extract labels and data
-def extractPicturesFromCSV(csvFile):
+def extractPicturesFromCSV(csvFile, blackAndWhite = False):
 	"""
 	Returns a list of matrix images
 	"""
@@ -20,7 +21,7 @@ def extractPicturesFromCSV(csvFile):
 
 	# Changes the data
 	for row in range(len(data)):
-		pic = fromVecToPic(data[row])
+		pic = fromVecToPic(data[row], blackAndWhite)
 		pictures.append(pic)
 
 	return np.array(pictures)
@@ -49,6 +50,19 @@ def shuffleDataLabel(dataArray, labelsArray):
 	"""
 	permut = np.random.permutation(len(labelsArray))
 	return dataArray[permut], labelsArray[permut]
+
+def balance(dataArray, labelsArray, shuffle):
+	"""
+	Creates a partial database with same number of each category
+	"""
+	if shuffle:
+		dataArray, labelsArray = shuffleDataLabel(dataArray, labelsArray)
+	selection = np.array([], dtype=int)
+	count = collections.Counter(labelsArray)
+	minLabel = min(count.values())
+	for label in count.keys():
+		selection = np.append(selection, np.where(labelsArray == label)[:minLabel])
+	return shuffleDataLabel(dataArray[selection], labelsArray[selection])
 
 # Manipulations on labels
 def changeLabels(labelsArray, label):
@@ -97,11 +111,12 @@ def flattenImages(imagesArray):
 def displayPicture(image):
 	scipy.misc.imshow(image)
 
-def fromVecToPic(vectorRGB):
+def fromVecToPic(vectorRGB, blackAndWhite):
 	"""
 	Transforms a vector of pixels of format
 	red pixels, green pixels, blue pixels
 	into a matrix of size sqrt(len(red pixels))^2
+	If blackAndWhite = True => Grayscale image
 	"""
 	third = int(len(vectorRGB)/3)
 
@@ -112,10 +127,15 @@ def fromVecToPic(vectorRGB):
 
 	# Computes image
 	dim = int(np.sqrt(third))
-	image = np.zeros((dim,dim,3))
-	image[:,:,0] = r.reshape((dim,dim))
-	image[:,:,1] = g.reshape((dim,dim))
-	image[:,:,2] = b.reshape((dim,dim))
+	if blackAndWhite:
+		image = np.zeros((dim,dim))
+		image = (0.2989 * r + 0.5870 * g
+		 	+ 0.1140 * b).reshape((dim,dim))
+	else:
+		image = np.zeros((dim,dim,3))
+		image[:,:,0] = r.reshape((dim,dim))
+		image[:,:,1] = g.reshape((dim,dim))
+		image[:,:,2] = b.reshape((dim,dim))
 
 	return image
 
