@@ -37,16 +37,19 @@ class ClassifierNN(Classifier):
 		"""
 		Computes the result of the netword by propagation
 		"""
-		res = data.copy()
-		for layer in range(self.layersNumber):
-			weight = self.weights[layer]
-			bias = self.biases[layer]
-			res = self.fActivation(np.dot(weight, res) + bias)
-		return np.argmax(res)
+		if self.weights is None:
+			print("Train before predict")
+		else:
+			res = data.copy()
+			for layer in range(self.layersNumber):
+				weight = self.weights[layer]
+				bias = self.biases[layer]
+				res = self.fActivation(np.dot(weight, res) + bias)
+			return np.argmax(res)
 
 	def train(self, trainData, trainLabels, testData, testLabels,
-		learningRate=0.01, regularization=0.1, batchSize=100, probabilistic=True,
-		iteration=100, testTime=10):
+		learningRate=0.001, regularization=0.01, batchSize=100, probabilistic=True,
+		iteration=1000, testTime=10):
 		"""
 		Computes the backpropagation of the gradient in order to reduce the
 		quadratic error
@@ -65,9 +68,7 @@ class ClassifierNN(Classifier):
 
 			# Changes order of the dataset
 			if probabilistic :
-				permut = np.random.permutation(len(trainDataFlatten))
-				trainLabelsFlatten = trainLabelsFlatten[permut]
-				trainDataFlatten = trainDataFlatten[permut]
+				trainDataFlatten, trainLabelsFlatten = dataManipulation.shuffleDataLabel(trainDataFlatten, trainLabelsFlatten)
 
 			# Computes each image
 			for batch in range(len(trainDataFlatten)//batchSize - 1):
@@ -88,9 +89,10 @@ class ClassifierNN(Classifier):
 									- learningRate*regularization*self.weights[i]
 									for i in range(len(totalDiffWeight))]
 				self.biases = [self.biases[i] - learningRate*totalDiffBias[i]
-									- learningRate*regularization*self.biases[i]
 									for i in range(len(totalDiffBias))]
 			print("{} / {}".format(ite+1, iteration), end = '\r')
+
+			# Test performances
 			if ite % testTime == 0:
 				self.test(testDataFlatten, testLabels)
 				self.test(trainDataFlatten, trainLabels)
