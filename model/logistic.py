@@ -13,12 +13,11 @@ class ClassifierLogistic(Classifier):
 	Structure for a regression classifier
 	"""
 
-	def __init__(self, error, errorGrad):
+	def __init__(self, errorFunction):
 		"""
 		Saves the error and grad used for gradient descent
 		"""
-		self.error = error
-		self.errorGrad = errorGrad
+		self.error = errorFunction
 
 	def predict(self, data, **kwargs):
 		"""
@@ -39,7 +38,7 @@ class ClassifierLogistic(Classifier):
 			return np.multiply(data,self.weight).sum() + self.bias
 
 	def train(self,trainData, trainLabels, testData = None, testLabels=None,
-		maxIter = 1000, learningRate = 0.1, regularization = 0.01, testTime = 100,
+		maxIter = 1, learningRate = 0.1, regularization = 0.01, testTime = 100,
 		b1 = 0.9, b2 = 0.999, b3 = 0.999, epsilon = 10**(-8), k = 0.1, K = 10):
 		"""
 		Trains the model and measure on the test data
@@ -84,10 +83,11 @@ class ClassifierLogistic(Classifier):
 
 			# Computes the full gradient and error
 			for j in range(len(trainDataBalanced)):
-				gradLocal = self.errorGrad(trainDataBalanced[j], trainLabelsBalanced[j], self.weight, self.bias)
+				forcast = self.project(trainDataBalanced[j])
+				gradLocal = self.error.derivateAt(forcast, trainLabelsBalanced[j])
 				grad += np.multiply(gradLocal, self.weight)/len(trainDataBalanced)
 				gradBias += gradLocal/len(trainDataBalanced)
-				loss += self.error(trainDataBalanced[j], trainLabelsBalanced[j], self.weight, self.bias)/len(trainDataBalanced)
+				loss += self.error.applyTo(forcast, trainLabelsBalanced[j])/len(trainDataBalanced)
 
 			# Updates the moving averages
 			m = b1*m + (1-b1)*grad
@@ -134,5 +134,5 @@ class ClassifierLogistic(Classifier):
 				if trainLabels is not None and testLabels is not None:
 					loss = 0
 					for j in range(len(testData)):
-						loss += self.error(testData[j], testLabels[j], self.weight, self.bias)/len(testData)
+						loss += self.error.applyTo(self.project(testData[j]), testLabels[j])/len(testData)
 					print("\t-> Test Loss : {}".format(loss))

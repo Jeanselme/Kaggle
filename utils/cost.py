@@ -5,29 +5,38 @@
 """
 
 import numpy as np
+from utils.function import FunctionCost
 
-# TODO : create object with embedded derivation
-def fQuadratic(x,y):
-	return (x-y)**2
-
-def dQuadratic(x,y):
-	return 2*(x-y)
-
-def fCrossEntropy(x,y):
-	return - np.multiply(y, np.log(x)) + np.multiply((1-y), np.log(1-x))
-
-def dCrossEntrop(x,y):
-	return np.multiply(x-y, 1/ np.multiply(x,1-x))
-
-def logisticLoss(features, label, weight, bias):
+class Quadratic(FunctionCost):
 	"""
-	Computes the logistic loss
+	Quadratic function
 	"""
-	return np.log(1 + np.exp(-label*(np.multiply(features,weight).sum() + bias)))
 
-def logisticGrad(features, label, weight, bias):
+	def applyTo(self, x, y):
+		return 1. / (1. + np.exp(-x))
+
+	def derivateAt(self, x, y):
+		return 2*(x-y)
+
+class CrossEntropy(FunctionCost):
 	"""
-	Computes the gradient of the logistic loss
+	Cross entropy function
 	"""
-	denum = 1 +  np.exp(label*(np.multiply(features,weight).sum()+bias))
-	return - label/denum
+
+	def applyTo(self, x, y):
+		return - np.multiply(y, np.log(x)) + np.multiply((1-y), np.log(1-x))
+
+	def derivateAt(self, x, y):
+		return np.multiply(x-y, 1/ np.multiply(x,1-x))
+
+class LogisticLoss(FunctionCost):
+	"""
+	Sigmoid function
+	"""
+
+	def applyTo(self, x, y):
+		return np.log(1 + np.exp(-y*x))
+
+	def derivateAt(self, x, y):
+		denum = 1 +  np.exp(y*x)
+		return - y/denum

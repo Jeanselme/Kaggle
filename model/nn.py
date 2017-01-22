@@ -13,7 +13,7 @@ class ClassifierNN(Classifier):
 	Structure for a neural network classifier
 	"""
 
-	def __init__(self, dims, fActivation, dActivation, fCost, dCost):
+	def __init__(self, dims, activationFunction, costFunction):
 		"""
 		Creates a neural network respecting the different given dimensions,
 		this should be a list of number, wher the first represents the number of
@@ -24,10 +24,8 @@ class ClassifierNN(Classifier):
 		self.weights = []
 		self.biases = []
 
-		self.fActivation = fActivation
-		self.dActivation = dActivation
-		self.fCost = fCost
-		self.dCost = dCost
+		self.activation = activationFunction
+		self.cost = costFunction
 
 		for d in range(self.layersNumber):
 			self.weights.append(np.random.randn(dims[d+1], dims[d]))
@@ -44,7 +42,7 @@ class ClassifierNN(Classifier):
 			for layer in range(self.layersNumber):
 				weight = self.weights[layer]
 				bias = self.biases[layer]
-				res = self.fActivation(np.dot(weight, res) + bias)
+				res = self.activation.applyTo(np.dot(weight, res) + bias)
 			return np.argmax(res)
 
 	def train(self, trainData, trainLabels, testData, testLabels,
@@ -113,18 +111,18 @@ class ClassifierNN(Classifier):
 		layerAct = [lastRes]
 		for layer in range(self.layersNumber):
 			layerRes = np.dot(self.weights[layer], lastRes) + self.biases[layer]
-			lastRes = self.fActivation(layerRes)
+			lastRes = self.activation.applyTo(layerRes)
 			layerSum.append(layerRes)
 			layerAct.append(lastRes)
 
 		# Backward
-		diffError = sum(self.fCost(lastRes, target))
-		delta = self.dCost(lastRes, target) * self.dActivation(lastRes)
+		diffError = sum(self.cost.applyTo(lastRes, target))
+		delta = self.cost.derivateAt(lastRes, target) * self.activation.derivateAt(lastRes)
 		diffBias[-1] = delta
 		diffWeight[-1] = np.dot(delta, layerAct[-2].transpose())
 		for layer in reversed(range(self.layersNumber-1)):
 			delta = np.dot(self.weights[layer+1].transpose(), delta) *\
-				self.dActivation(layerSum[layer])
+				self.activation.derivateAt(layerSum[layer])
 			diffBias[layer] = delta
 			diffWeight[layer] = np.dot(delta, layerAct[layer].transpose())
 
