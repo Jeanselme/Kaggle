@@ -25,7 +25,7 @@ class oneVsAll(Classifier):
 		"""
 		Forecasts the output given the data
 		"""
-		return np.argmax([modeli.predict(data, **self.args) for modeli in self.trainModels])
+		return np.argmax([modeli.project(data, **self.args) for modeli in self.trainModels])
 
 	def train(self, trainData, trainLabels, testData = None, testLabels=None, **kwargs):
 		"""
