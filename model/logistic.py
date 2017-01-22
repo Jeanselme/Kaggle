@@ -5,6 +5,7 @@
 """
 
 import numpy as np
+import dataManipulation
 from model.classifier import Classifier
 
 class ClassifierLogistic(Classifier):
@@ -23,29 +24,54 @@ class ClassifierLogistic(Classifier):
 		"""
 		Forecasts the output given the data
 		"""
-		return np.multiply(data,self.weight).sum() + self.bias > 0
+		if self.weight is None:
+			print("Train before predict")
+		else:
+			return np.sign(np.multiply(data,self.weight).sum() + self.bias)
+
+	def project(self, data, **kwargs):
+		"""
+		Projects the data
+		"""
+		if self.weight is None:
+			print("Train before predict")
+		else:
+			return np.multiply(data,self.weight).sum() + self.bias
 
 	def train(self,trainData, trainLabels, testData = None, testLabels=None,
-		maxIter = 100, learningRate = 0.1, regularization = 0.1, testTime = 100,
+		maxIter = 1000, learningRate = 0.1, regularization = 0.01, testTime = 100,
 		b1 = 0.9, b2 = 0.999, b3 = 0.999, epsilon = 10**(-8), k = 0.1, K = 10):
 		"""
 		Trains the model and measure on the test data
+		Based on Eve algorithm for adaptative learning rate
 		"""
 		lossesTrain = []
-		self.weight, self.bias = np.zeros(trainData[0].shape), 0
+		features = trainData[0].shape
+		# Total number of features
+		total = 1
+		for d in features:
+			total *= d
+		self.weight, self.bias = np.random.rand(total).reshape(features), np.random.rand(1)
 
 		# Moving averages
 		m = np.zeros(self.weight.shape)
 		v = np.zeros(self.weight.shape)
+
+		mb = 0
+		vb = 0
+
 		# To compute them
-		b1t = 0
-		b2t = 0
+		b1t = 1
+		b2t = 1
 		# Adaptative learning rate
 		d = 1
 		# Loss of the last epoch
 		oldLoss = 0
 
 		for i in range(maxIter):
+			# Balance the data
+			trainDataBalanced, trainLabelsBalanced = dataManipulation.balance(trainData, trainLabels, True)
+
 			# To avoid overflow
 			if i > 1000:
 				b1t = 0
@@ -57,14 +83,11 @@ class ClassifierLogistic(Classifier):
 			grad, gradBias = np.zeros(self.weight.shape), 0
 
 			# Computes the full gradient and error
-			for j in range(len(trainData)):
-				gradLocal, gradBiasLocal = self.errorGrad(trainData[j], trainLabels[j], self.weight, self.bias)
-				grad += gradLocal/len(trainData)
-				gradLocal += gradBiasLocal/len(trainData)
-				loss += self.error(trainData[j], trainLabels[j], self.weight, self.bias)/len(trainData)
-
-			grad += regularization*self.weight
-			gradBias += regularization*self.bias
+			for j in range(len(trainDataBalanced)):
+				gradLocal = self.errorGrad(trainDataBalanced[j], trainLabelsBalanced[j], self.weight, self.bias)
+				grad += np.multiply(gradLocal, self.weight)/len(trainDataBalanced)
+				gradBias += gradLocal/len(trainDataBalanced)
+				loss += self.error(trainDataBalanced[j], trainLabelsBalanced[j], self.weight, self.bias)/len(trainDataBalanced)
 
 			# Updates the moving averages
 			m = b1*m + (1-b1)*grad
@@ -72,6 +95,12 @@ class ClassifierLogistic(Classifier):
 
 			v = b2*v + (1-b2)*np.multiply(grad,grad)
 			vh = v/(1-b2t)
+
+			mb = b1*mb + (1-b1)*gradBias
+			mbh = mb / (1-b1t)
+
+			vb = b2*vb + (1-b2)*np.multiply(gradBias,gradBias)
+			vbh = vb/(1-b2t)
 
 			# Updates the adaptative learning rate
 			if (i > 0):
@@ -93,8 +122,8 @@ class ClassifierLogistic(Classifier):
 				oldLoss = loss
 
 			# Updates the weight
-			self.weight -= learningRate*(np.multiply(mh,1/(d*np.sqrt(vh) + epsilon)))
-			self.bias -= learningRate*gradBias
+			self.weight -= learningRate*(np.multiply(mh,1/(d*np.sqrt(vh) + epsilon)) + regularization*self.weight)
+			self.bias -= learningRate*(mbh/(d*vbh + epsilon))
 
 			# Computes the error on the training and testing sets
 			if (i % testTime == 0):
@@ -107,5 +136,3 @@ class ClassifierLogistic(Classifier):
 					for j in range(len(testData)):
 						loss += self.error(testData[j], testLabels[j], self.weight, self.bias)/len(testData)
 					print("\t-> Test Loss : {}".format(loss))
-
-		self.test(testData, testLabels)
