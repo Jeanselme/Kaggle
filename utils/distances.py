@@ -19,7 +19,7 @@ def distanceKernelLinear(image, image2):
 	"""
 	return np.multiply(image,image2).sum()
 
-def distanceKernelPoly(image, image2, power = 5, intercept = 1):
+def distanceKernelPoly(image, image2, power = 2, intercept = 1):
 	"""
 	Computes the distance between two images of the same size
 	"""

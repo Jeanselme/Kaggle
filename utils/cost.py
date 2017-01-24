@@ -13,7 +13,7 @@ class Quadratic(FunctionCost):
 	"""
 
 	def applyTo(self, x, y):
-		return 1. / (1. + np.exp(-x))
+		return (x-y)**2
 
 	def derivateAt(self, x, y):
 		return 2*(x-y)
@@ -24,14 +24,16 @@ class CrossEntropy(FunctionCost):
 	"""
 
 	def applyTo(self, x, y):
-		return - np.multiply(y, np.log(x)) + np.multiply((1-y), np.log(1-x))
+		t = (1+y)/2
+		return - np.multiply(t, np.log(x)) - np.multiply((1-t), np.log(1-x))
 
 	def derivateAt(self, x, y):
-		return np.multiply(x-y, 1/ np.multiply(x,1-x))
+		t = (1+y)/2
+		return np.multiply(x-t, 1/np.multiply(x,1-x))
 
 class LogisticLoss(FunctionCost):
 	"""
-	Sigmoid function
+	Logistic function
 	"""
 
 	def applyTo(self, x, y):
@@ -40,3 +42,17 @@ class LogisticLoss(FunctionCost):
 	def derivateAt(self, x, y):
 		denum = 1 +  np.exp(y*x)
 		return - y/denum
+
+class HingeLoss(FunctionCost):
+	"""
+	Hinge function
+	"""
+
+	def applyTo(self, x, y):
+		return max(0, 1-x*y)
+
+	def derivateAt(self, x, y):
+		if x*y < 1:
+			return - x*y
+		else:
+			return 0
