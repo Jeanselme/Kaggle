@@ -4,6 +4,8 @@
 	vincent.jeanselme@gmail.com
 """
 
+import collections
+import numpy as np
 import dataManipulation
 
 class Classifier:
@@ -16,6 +18,13 @@ class Classifier:
 		Forecasts the output given the data
 		"""
 		pass
+
+	def project(self, data, **kwargs):
+		"""
+		Computes the value without estimation of the class
+		(used for one vs all)
+		"""
+		return self.predict(data, **kwargs)
 
 	def test(self, testData, testLabels = None, save = None):
 		"""
