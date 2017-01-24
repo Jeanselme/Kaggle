@@ -26,7 +26,7 @@ class ClassifierLogistic(Classifier):
 		if self.weight is None:
 			print("Train before predict")
 		else:
-			return np.sign(np.multiply(data,self.weight).sum() + self.bias)
+			return np.sign(self.project(data))
 
 	def project(self, data, **kwargs):
 		"""
@@ -38,7 +38,7 @@ class ClassifierLogistic(Classifier):
 			return np.multiply(data,self.weight).sum() + self.bias
 
 	def train(self,trainData, trainLabels, testData = None, testLabels=None,
-		maxIter = 1, learningRate = 0.1, regularization = 0.01, testTime = 100,
+		maxIter = 1000, learningRate = 0.001, regularization = 0.01, testTime = 100,
 		b1 = 0.9, b2 = 0.999, b3 = 0.999, epsilon = 10**(-8), k = 0.1, K = 10):
 		"""
 		Trains the model and measure on the test data
@@ -62,12 +62,15 @@ class ClassifierLogistic(Classifier):
 		# To compute them
 		b1t = 1
 		b2t = 1
+
 		# Adaptative learning rate
 		d = 1
-		# Loss of the last epoch
-		oldLoss = 0
 
-		for i in range(maxIter):
+		# Loss of the last epoch
+		oldLoss = 1
+		i = 0
+
+		while i < maxIter and abs(oldLoss) > 0.1 :
 			# Balance the data
 			trainDataBalanced, trainLabelsBalanced = dataManipulation.balance(trainData, trainLabels, True)
 
@@ -78,15 +81,16 @@ class ClassifierLogistic(Classifier):
 			else:
 				b1t *= b1
 				b2t *= b2
+
 			loss = 0
 			grad, gradBias = np.zeros(self.weight.shape), 0
 
 			# Computes the full gradient and error
 			for j in range(len(trainDataBalanced)):
 				forcast = self.project(trainDataBalanced[j])
-				gradLocal = self.error.derivateAt(forcast, trainLabelsBalanced[j])
-				grad += np.multiply(gradLocal, self.weight)/len(trainDataBalanced)
-				gradBias += gradLocal/len(trainDataBalanced)
+				gradLocal = self.error.derivateAt(forcast, trainLabelsBalanced[j])/len(trainDataBalanced)
+				grad += (np.multiply(gradLocal, self.weight))
+				gradBias += gradLocal
 				loss += self.error.applyTo(forcast, trainLabelsBalanced[j])/len(trainDataBalanced)
 
 			# Updates the moving averages
@@ -121,9 +125,12 @@ class ClassifierLogistic(Classifier):
 			else:
 				oldLoss = loss
 
-			# Updates the weight
-			self.weight -= learningRate*(np.multiply(mh,1/(d*np.sqrt(vh) + epsilon)) + regularization*self.weight)
-			self.bias -= learningRate*(mbh/(d*vbh + epsilon))
+			# Updates the weight - Regularization not taken into account in grad
+			# in order to avoid a too important regularization on compaeison with grad
+			self.weight -= learningRate*(np.multiply(mh,1/(d*np.sqrt(vh) + epsilon)) + regularization*self.weight/len(trainDataBalanced))
+			self.bias -= learningRate*(mbh/(d*np.sqrt(vbh) + epsilon))
+
+			i += 1
 
 			# Computes the error on the training and testing sets
 			if (i % testTime == 0):
