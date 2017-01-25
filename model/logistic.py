@@ -38,7 +38,7 @@ class ClassifierLogistic(Classifier):
 			return np.multiply(data,self.weight).sum() + self.bias
 
 	def train(self,trainData, trainLabels, testData = None, testLabels=None,
-		maxIter = 1000, learningRate = 0.001, regularization = 0.01, testTime = 100,
+		maxIter = 500, learningRate = 0.01, regularization = 1, testTime = 100,
 		b1 = 0.9, b2 = 0.999, b3 = 0.999, epsilon = 10**(-8), k = 0.1, K = 10):
 		"""
 		Trains the model and measure on the test data
@@ -89,7 +89,7 @@ class ClassifierLogistic(Classifier):
 			for j in range(len(trainDataBalanced)):
 				forcast = self.project(trainDataBalanced[j])
 				gradLocal = self.error.derivateAt(forcast, trainLabelsBalanced[j])/len(trainDataBalanced)
-				grad += (np.multiply(gradLocal, self.weight))
+				grad += (np.multiply(gradLocal, trainDataBalanced[j]))
 				gradBias += gradLocal
 				loss += self.error.applyTo(forcast, trainLabelsBalanced[j])/len(trainDataBalanced)
 
