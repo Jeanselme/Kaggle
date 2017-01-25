@@ -45,56 +45,108 @@ class ClassifierNN(Classifier):
 				res = self.activation.applyTo(np.dot(weight, res) + bias)
 			return np.argmax(res)
 
+	def test(self, testData, testLabels = None, save = None):
+		"""
+		Flatten data before test
+		"""
+		super(ClassifierNN, self).test(testData, testLabels, save)
+
 	def train(self, trainData, trainLabels, testData, testLabels,
-		learningRate=0.001, regularization=0.01, batchSize=100, probabilistic=True,
-		iteration=1000, testTime=10):
+		learningRate=0.001, regularization=1, batchSize=100, probabilistic=True,
+		iteration=100, testTime=1,b1 = 0.9, b2 = 0.999, b3 = 0.999, epsilon = 10**(-8),
+		k = 0.1, K = 10):
 		"""
 		Computes the backpropagation of the gradient in order to reduce the
 		quadratic error
 		"""
 		# Flattens the data
-		testDataFlatten = dataManipulation.flattenImages(testData)
-		trainDataFlatten = dataManipulation.flattenImages(trainData)
 		trainLabelsFlatten = dataManipulation.binaryArrayFromLabel(trainLabels)
 
-		error, pastError = 0, 0
+		loss, oldLoss = 0, 0
+		b1t, b2t = 1, 1
+		d = 1
+
+		# Moving averages
+		m = [np.zeros(weight.shape) for weight in self.weights]
+		v = [np.zeros(weight.shape) for weight in self.weights]
+
+		mb = [np.zeros(bias.shape) for bias in self.biases]
+		vb = [np.zeros(bias.shape) for bias in self.biases]
+
 		for ite in range(iteration):
-			# Decrease the learningRate
-			if ite > 1 and error > pastError :
-				learningRate /= 2
-			pastError = error
+			print("{} / {}".format(ite+1, iteration), end = '\r')
 
 			# Changes order of the dataset
 			if probabilistic :
-				trainDataFlatten, trainLabelsFlatten = dataManipulation.shuffleDataLabel(trainDataFlatten, trainLabelsFlatten)
+				trainDataModified, trainLabelsFlatten = dataManipulation.shuffleDataLabel(trainData, trainLabelsFlatten)
 
 			# Computes each image
-			for batch in range(len(trainDataFlatten)//batchSize - 1):
+			for batch in range(len(trainDataModified)//batchSize - 1):
 				totalDiffWeight = [np.zeros(weight.shape) for weight in self.weights]
 				totalDiffBias = [np.zeros(bias.shape) for bias in self.biases]
 
+				if ite*batchSize > 1000:
+					b1t = 0
+					b2t = 0
+				else:
+					b1t *= b1
+					b2t *= b2
+				loss = 0
+
 				# Computes the difference for each batch
 				for i in range(batch*batchSize,(batch+1)*batchSize):
-					diffWeight, diffBias, diffError = self._computeDiff_(trainLabelsFlatten[i], trainDataFlatten[i])
-					totalDiffWeight = [totalDiffWeight[j] + diffWeight[j]
+					diffWeight, diffBias, diffError = self._computeDiff_(trainLabelsFlatten[i], trainDataModified[i])
+					totalDiffWeight = [totalDiffWeight[j] + diffWeight[j]/batchSize
 										for j in range(len(totalDiffWeight))]
-					totalDiffBias = [totalDiffBias[j] + diffBias[j]
+					totalDiffBias = [totalDiffBias[j] + diffBias[j]/batchSize
 										for j in range(len(totalDiffBias))]
-					error += diffError
+					loss += diffError
+
+				# Moving averages for weights
+				m = [b1*m[j] + (1-b1)*totalDiffWeight[j] for  j in range(len(totalDiffWeight))]
+				mh = [m[j]/(1-b1t) for j in range(len(totalDiffWeight))]
+
+				v = [b2*v[j] + (1-b2)*np.multiply(totalDiffWeight[j], totalDiffWeight[j]) for  j in range(len(totalDiffWeight))]
+				vh = [v[j]/(1-b2t) for j in range(len(totalDiffWeight))]
+
+				# Moving averages for bias
+				mb = [b1*mb[j] + (1-b1)*totalDiffBias[j] for  j in range(len(totalDiffBias))]
+				mbh = [mb[j]/(1-b1t) for j in range(len(totalDiffBias))]
+
+				vb = [b2*vb[j] + (1-b2)*np.multiply(totalDiffBias[j], totalDiffBias[j]) for  j in range(len(totalDiffBias))]
+				vbh = [vb[j]/(1-b2t) for j in range(len(totalDiffBias))]
+
+				# Adaptative learning rate
+				if (ite > 0):
+					# In order to bound the learning rate
+					if loss < oldLoss:
+						delta = k + 1
+						Delta = K + 1
+					else:
+						delta = 1/(K+1)
+						Delta = 1/(k+1)
+					c = min(max(delta, loss/oldLoss), Delta)
+					oldLossS = oldLoss
+					oldLoss = c*oldLoss
+					# Computes the feedback of the error function (normalized)
+					r = abs(oldLoss - oldLossS)/(min(oldLoss,oldLossS))
+					# Updates the correction of learning rate
+					d = b3*d + (1-b3)*r
+				else:
+					oldLoss = loss
 
 				# Update weights and biases of each neuron
-				self.weights = [self.weights[i] - learningRate*totalDiffWeight[i]
-									- learningRate*regularization*self.weights[i]
+				self.weights = [self.weights[i] - learningRate*(np.multiply(mh[i],1/(d*np.sqrt(vh[i]) + epsilon)) + regularization*self.weights[i])
 									for i in range(len(totalDiffWeight))]
-				self.biases = [self.biases[i] - learningRate*totalDiffBias[i]
+				self.biases = [self.biases[i] - learningRate*(mbh[i]/(d*np.sqrt(vbh[i]) + epsilon))
 									for i in range(len(totalDiffBias))]
-			print("{} / {}".format(ite+1, iteration), end = '\r')
 
 			# Test performances
 			if ite % testTime == 0:
-				self.test(testDataFlatten, testLabels)
-				self.test(trainDataFlatten, trainLabels)
-		self.test(testDataFlatten, testLabels)
+				print(loss)
+				self.test(trainData, trainLabels)
+				self.test(testData, testLabels)
+		self.test(testData, testLabels)
 
 	def _computeDiff_(self, target, input):
 		"""
