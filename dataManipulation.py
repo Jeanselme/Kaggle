@@ -7,9 +7,10 @@ import pandas
 import collections
 import numpy as np
 import scipy.misc
+from utils.imageDescriptor import *
 
 # Extract labels and data
-def extractPicturesFromCSV(csvFile, blackAndWhite = False):
+def extractPicturesFromCSV(csvFile):
 	"""
 	Returns a list of matrix images
 	"""
@@ -21,7 +22,7 @@ def extractPicturesFromCSV(csvFile, blackAndWhite = False):
 
 	# Changes the data
 	for row in range(len(data)):
-		pic = fromVecToPic(data[row], blackAndWhite)
+		pic = fromVecToPic(data[row])
 		pictures.append(pic)
 
 	return np.array(pictures)
@@ -38,7 +39,7 @@ def saveLabelsToCsv(labelsArray, fileName):
 	"""
 	# Creates an adaptated dataFrame for Kaggle
 	df = pandas.DataFrame()
-	df['Id'] = range(1,len(labels)+1)
+	df['Id'] = range(1,len(labelsArray)+1)
 	df['Prediction'] = labelsArray
 
 	# Saves the data
@@ -62,6 +63,16 @@ def balance(dataArray, labelsArray, shuffle):
 	minLabel = min(count.values())
 	for label in count.keys():
 		selection = np.append(selection, np.where(labelsArray == label)[:minLabel])
+	return shuffleDataLabel(dataArray[selection], labelsArray[selection])
+
+def selectLabels(dataArray, labelsArray, labels):
+	"""
+	Transforms the labels into a binary array with class = +1 if label=i, -1 if label=j
+	"""
+
+	selection = np.array([], dtype=int)
+	for label in labels:
+		selection = np.append(selection, np.where(labelsArray == label))
 	return shuffleDataLabel(dataArray[selection], labelsArray[selection])
 
 # Manipulations on labels
@@ -94,15 +105,17 @@ def binaryArrayFromLabel(labelsArray):
 	return np.array(res)
 
 # Manipulation on images
-def flattenImages(imagesArray):
+def describeImages(imagesArray):
 	"""
 	Flatten images into 1D array
+	And add the histogram of gradient and of color
 	"""
 	res = []
 
 	for image in imagesArray:
-		image = image.copy().flatten()
-		# To avoid numpy error of shape
+		alpha, intensity = hOg(image)
+		r, g, b = hOc(image)
+		image = np.concatenate((image.flatten(), alpha, intensity, r, g, b))
 		image = image.reshape((len(image),1))
 		res.append(image)
 
@@ -111,12 +124,11 @@ def flattenImages(imagesArray):
 def displayPicture(image):
 	scipy.misc.imshow(image)
 
-def fromVecToPic(vectorRGB, blackAndWhite):
+def fromVecToPic(vectorRGB):
 	"""
 	Transforms a vector of pixels of format
 	red pixels, green pixels, blue pixels
 	into a matrix of size sqrt(len(red pixels))^2
-	If blackAndWhite = True => Grayscale image
 	"""
 	third = int(len(vectorRGB)/3)
 
@@ -127,15 +139,11 @@ def fromVecToPic(vectorRGB, blackAndWhite):
 
 	# Computes image
 	dim = int(np.sqrt(third))
-	if blackAndWhite:
-		image = np.zeros((dim,dim))
-		image = (0.2989 * r + 0.5870 * g
-		 	+ 0.1140 * b).reshape((dim,dim))
-	else:
-		image = np.zeros((dim,dim,3))
-		image[:,:,0] = r.reshape((dim,dim))
-		image[:,:,1] = g.reshape((dim,dim))
-		image[:,:,2] = b.reshape((dim,dim))
+
+	image = np.zeros((dim,dim,3))
+	image[:,:,0] = b.reshape((dim,dim))
+	image[:,:,1] = b.reshape((dim,dim))
+	image[:,:,2] = r.reshape((dim,dim))
 
 	return image
 
