@@ -38,7 +38,7 @@ class ClassifierLogistic(Classifier):
 			return np.multiply(data,self.weight).sum() + self.bias
 
 	def train(self,trainData, trainLabels, testData = None, testLabels=None,
-		maxIter = 500, learningRate = 0.01, regularization = 1, testTime = 100,
+		maxIter = 2000, learningRate = 0.001, regularization = 10, testTime = 200,
 		b1 = 0.9, b2 = 0.999, b3 = 0.999, epsilon = 10**(-8), k = 0.1, K = 10):
 		"""
 		Trains the model and measure on the test data
@@ -127,7 +127,7 @@ class ClassifierLogistic(Classifier):
 
 			# Updates the weight - Regularization not taken into account in grad
 			# in order to avoid a too important regularization on compaeison with grad
-			self.weight -= learningRate*(np.multiply(mh,1/(d*np.sqrt(vh) + epsilon)) + regularization*self.weight/len(trainDataBalanced))
+			self.weight -= learningRate*(np.multiply(mh,1/(d*np.sqrt(vh) + epsilon)) + regularization*self.weight)
 			self.bias -= learningRate*(mbh/(d*np.sqrt(vbh) + epsilon))
 
 			i += 1

@@ -53,7 +53,7 @@ class ClassifierNN(Classifier):
 
 	def train(self, trainData, trainLabels, testData, testLabels,
 		learningRate=0.001, regularization=1, batchSize=100, probabilistic=True,
-		iteration=100, testTime=1,b1 = 0.9, b2 = 0.999, b3 = 0.999, epsilon = 10**(-8),
+		iteration=1000, testTime=1,b1 = 0.9, b2 = 0.999, b3 = 0.999, epsilon = 10**(-8),
 		k = 0.1, K = 10):
 		"""
 		Computes the backpropagation of the gradient in order to reduce the

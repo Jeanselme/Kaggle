@@ -57,4 +57,5 @@ class oneVsOne(Classifier):
 				modelj.append(modelij)
 			self.trainModels.append(modelj)
 
+		self.test(trainData, trainLabels)
 		self.test(testData, testLabels)

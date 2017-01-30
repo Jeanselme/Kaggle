@@ -45,4 +45,5 @@ class oneVsAll(Classifier):
 			modeli.test(testData, testLabelsi)
 			self.trainModels.append(modeli)
 
+		self.test(trainData, trainLabels)
 		self.test(testData, testLabels)
