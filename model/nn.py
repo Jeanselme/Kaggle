@@ -61,6 +61,7 @@ class ClassifierNN(Classifier):
 		"""
 		# Flattens the data
 		trainLabelsFlatten = dataManipulation.binaryArrayFromLabel(trainLabels)
+		trainDataModified = trainData.copy()
 
 		loss, oldLoss = 0, 0
 		b1t, b2t = 1, 1
@@ -78,7 +79,7 @@ class ClassifierNN(Classifier):
 
 			# Changes order of the dataset
 			if probabilistic :
-				trainDataModified, trainLabelsFlatten = dataManipulation.shuffleDataLabel(trainData, trainLabelsFlatten)
+				trainDataModified, trainLabelsFlatten = dataManipulation.shuffleDataLabel(trainDataModified, trainLabelsFlatten)
 
 			# Computes each image
 			for batch in range(len(trainDataModified)//batchSize - 1):
