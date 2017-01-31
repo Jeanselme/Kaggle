@@ -13,17 +13,17 @@ def normalize(array):
 	"""
 	Normlizes the array
 	"""
-	return (array - np.mean(array)) / (np.var(array))
+	return (array - np.mean(array)) / max(epsilon,np.var(array))
 
-def histogram(flatArray, downBound, upBound, numberOfInterval):
+def histogram(flatArray, downBound, upBound, numberInterval):
 	"""
 	Creates the histogram of flatArray into number of interval
 	"""
-	intervals = (upBound - downBound)/numberOfInterval
-	res = [0] * numberOfInterval
+	intervals = max(1,(upBound - downBound)/numberInterval)
+	res = [0] * numberInterval
 
 	for data in flatArray:
-		res[max(0, min(int(data - downBound// intervals), numberOfInterval -1))] += 1
+		res[max(0, min(int(data - downBound// intervals), numberInterval -1))] += 1
 
 	return np.array(res)
 
@@ -57,5 +57,28 @@ def hOc(image, numberInterval = 100):
 	g = normalize(image[:,:,1].flatten())
 	b = normalize(image[:,:,2].flatten())
 
-	return normalize(histogram(r, -10, 10, numberInterval)), normalize(histogram(r, -10, 10, numberInterval)),\
+	return normalize(histogram(r, -10, 10, numberInterval)), normalize(histogram(g, -10, 10, numberInterval)),\
 	 	normalize(histogram(b, -10, 10, numberInterval))
+
+def localDescriptor(image, numberRegion = 4):
+	"""
+	Divides the image into subregions and computes the descriptor
+	"""
+	height = int(image.shape[0]/numberRegion)
+	width = int(image.shape[1]/numberRegion)
+
+	localAlpha, localIntensity, localR, localG, localB = np.array([]), np.array([]), np.array([]), np.array([]), np.array([])
+
+	for i in range(numberRegion):
+		for j in range(numberRegion):
+			subimage = image[i*height:(i+1)*height, j*width:(j+1)*width,:]
+			alpha, intensity = hOg(subimage, numberInterval = 10)
+			r, g, b = hOc(subimage, numberInterval = 10)
+
+			localAlpha = np.concatenate((localAlpha, alpha))
+			localIntensity = np.concatenate((localIntensity, intensity))
+			localR = np.concatenate((localR, r))
+			localG = np.concatenate((localG, g))
+			localB = np.concatenate((localB, b))
+
+	return localAlpha, localIntensity, localR, localG, localB
