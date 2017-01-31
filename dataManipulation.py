@@ -73,7 +73,7 @@ def selectLabels(dataArray, labelsArray, labels):
 	selection = np.array([], dtype=int)
 	for label in labels:
 		selection = np.append(selection, np.where(labelsArray == label))
-	return shuffleDataLabel(dataArray[selection], labelsArray[selection])
+	return shuffleDataLabel(dataArray[selection].copy(), labelsArray[selection].copy())
 
 # Manipulations on labels
 def changeLabels(labelsArray, label):
@@ -115,9 +115,10 @@ def describeImages(imagesArray):
 	for image in imagesArray:
 		alpha, intensity = hOg(image)
 		r, g, b = hOc(image)
-		image = np.concatenate((image.flatten(), alpha, intensity, r, g, b))
-		image = image.reshape((len(image),1))
-		res.append(image)
+		localAlpha, localIntensity, localR, localG, localB = localDescriptor(image)
+		resImage = np.concatenate((image.flatten(), alpha, intensity, r, g, b, localAlpha, localIntensity, localR, localG, localB))
+		resImage = resImage.reshape((len(resImage),1))
+		res.append(resImage)
 
 	return np.array(res)
 
