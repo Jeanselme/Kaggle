@@ -13,16 +13,13 @@ class ClassifierKernel(Classifier):
 	"""
 	Structure for a kernel regression classifier
 	"""
-	# Share the gram matrix between several svm to avoid recomputation
-	gram = None
 
 	def __init__(self, kernel, recompute = True):
 		"""
 		Saves the kernel function
 		"""
 		self.kernel = kernel
-		if recompute:
-			ClassifierKernel.gram = None
+		self.gram = None
 
 	def project(self, data, **kwargs):
 		"""
@@ -54,8 +51,7 @@ class ClassifierKernel(Classifier):
  		"""
 		# Computes Gram matrix
 		y = trainLabels.flatten()
-		if ClassifierKernel.gram is None:
-			ClassifierKernel.gram = self._computeGram_(trainData)
+		self.gram = self._computeGram_(trainData)
 
 		dim = len(trainData)
 
@@ -66,7 +62,7 @@ class ClassifierKernel(Classifier):
 		subject to	Gx < h
 					Ax = b
 		"""
-		P = cvxopt.matrix(np.outer(y,y) * ClassifierKernel.gram)
+		P = cvxopt.matrix(np.outer(y,y) * self.gram)
 		q = cvxopt.matrix(np.ones(dim) * -1)
 		A = cvxopt.matrix(y, (1,dim), 'd')
 		b = cvxopt.matrix(0.0)
@@ -75,7 +71,7 @@ class ClassifierKernel(Classifier):
 		h_std = cvxopt.matrix(np.zeros(dim))
 
 		G_slack = cvxopt.matrix(np.diag(np.ones(dim)))
-		h_slack = cvxopt.matrix(np.ones(dim) * 0.001000000)
+		h_slack = cvxopt.matrix(np.ones(dim) * 1)
 
 		G = cvxopt.matrix(np.vstack((G_std, G_slack)))
 		h = cvxopt.matrix(np.vstack((h_std, h_slack)))
@@ -99,7 +95,7 @@ class ClassifierKernel(Classifier):
 		self.bias = 0
 		for n in range(len(self.alpha)):
 			self.bias += self.supportVectorLabels[n]
-			self.bias -= np.sum(self.alpha[n] * self.supportVectorLabels[n] * ClassifierKernel.gram[ind[n],supportVector[n]])
+			self.bias -= np.sum(self.alpha[n] * self.supportVectorLabels[n] * self.gram[ind[n],supportVector[n]])
 		self.bias /= len(self.alpha)
 
 		self.test(trainData, trainLabels)
