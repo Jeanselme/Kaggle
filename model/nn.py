@@ -52,7 +52,7 @@ class ClassifierNN(Classifier):
 		super(ClassifierNN, self).test(testData, testLabels, save)
 
 	def train(self, trainData, trainLabels, testData, testLabels,
-		learningRate=0.001, regularization=1, batchSize=100, probabilistic=True,
+		learningRate=0.001, regularization=4, batchSize=100, probabilistic=True,
 		iteration=1000, testTime=1,b1 = 0.9, b2 = 0.999, b3 = 0.999, epsilon = 10**(-8),
 		k = 0.1, K = 10):
 		"""
@@ -120,14 +120,14 @@ class ClassifierNN(Classifier):
 				# Adaptative learning rate
 				if (ite > 0):
 					# In order to bound the learning rate
-					if loss < oldLoss:
+					if loss >= oldLoss:
 						delta = k + 1
 						Delta = K + 1
 					else:
 						delta = 1/(K+1)
 						Delta = 1/(k+1)
 					c = min(max(delta, loss/oldLoss), Delta)
-					oldLossS = oldLoss
+					oldLossS = max(epsilon, oldLoss)
 					oldLoss = c*oldLoss
 					# Computes the feedback of the error function (normalized)
 					r = abs(oldLoss - oldLossS)/(min(oldLoss,oldLossS))
