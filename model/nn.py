@@ -144,7 +144,7 @@ class ClassifierNN(Classifier):
 
 			# Test performances
 			if ite % testTime == 0:
-				print(loss)
+				print(i, loss)
 				self.test(trainData, trainLabels)
 				self.test(testData, testLabels)
 		self.test(testData, testLabels)
