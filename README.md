@@ -14,3 +14,9 @@ The knn method gives about 10 % of accuracy on the test data.
 
 ### logistic regression - One vs all
 It gives 20 %.
+
+### SVM
+This method goes up to 27% with global descriptors.
+
+## Libraries
+Needs cvxopt, numpy and pandas. Executed with python3.5

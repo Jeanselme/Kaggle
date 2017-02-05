@@ -14,7 +14,7 @@ class ClassifierKernel(Classifier):
 	Structure for a kernel regression classifier
 	"""
 
-	def __init__(self, kernel, recompute = True):
+	def __init__(self, kernel):
 		"""
 		Saves the kernel function
 		"""
@@ -62,19 +62,25 @@ class ClassifierKernel(Classifier):
 		subject to	Gx < h
 					Ax = b
 		"""
+		# P is gram matrix
+		# q is a vector of labels
 		P = cvxopt.matrix(np.outer(y,y) * self.gram)
 		q = cvxopt.matrix(np.ones(dim) * -1)
+
+		# A = 1T
 		A = cvxopt.matrix(y, (1,dim), 'd')
 		b = cvxopt.matrix(0.0)
 
-		G_std = cvxopt.matrix(np.diag(np.ones(dim) * -1))
-		h_std = cvxopt.matrix(np.zeros(dim))
+		# G = diag(d)
+		# h = gamma*1
+		G_std = np.diag(np.ones(dim) * -1)
+		h_std = np.zeros(dim)
 
-		G_slack = cvxopt.matrix(np.diag(np.ones(dim)))
-		h_slack = cvxopt.matrix(np.ones(dim) * 1)
+		G_slack = np.identity(dim)
+		h_slack = np.ones(dim)
 
 		G = cvxopt.matrix(np.vstack((G_std, G_slack)))
-		h = cvxopt.matrix(np.vstack((h_std, h_slack)))
+		h = cvxopt.matrix(np.hstack((h_std, h_slack)))
 
 		# solve QP problem
 		solution = cvxopt.solvers.qp(P, q, G, h, A, b)
@@ -95,7 +101,7 @@ class ClassifierKernel(Classifier):
 		self.bias = 0
 		for n in range(len(self.alpha)):
 			self.bias += self.supportVectorLabels[n]
-			self.bias -= np.sum(self.alpha[n] * self.supportVectorLabels[n] * self.gram[ind[n],supportVector[n]])
+			self.bias -= np.sum(self.alpha * self.supportVectorLabels * self.gram[ind[n],supportVector])
 		self.bias /= len(self.alpha)
 
 		self.test(trainData, trainLabels)
@@ -108,7 +114,8 @@ class ClassifierKernel(Classifier):
 		dim = len(data)
 		gram = np.zeros((dim, dim))
 		for i in range(dim):
-			for j in range(dim):
+			for j in range(i, dim):
 				gram[i,j] = self.kernel(data[i], data[j])
+				gram[j,i] = gram[i,j]
 
 		return gram
