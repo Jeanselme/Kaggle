@@ -7,6 +7,7 @@ import pandas
 import collections
 import numpy as np
 import scipy.misc
+from scipy.ndimage import rotate
 from utils.imageDescriptor import *
 
 # Extract labels and data
@@ -32,6 +33,21 @@ def extractLabelsFromCSV(csvFile):
 	Returns a list of labels
 	"""
 	return pandas.read_csv(csvFile)["Prediction"].as_matrix()
+
+def addRotations(images, labels, rotation=[-15,15]):
+	"""
+	Returns the list of initial images with different rotations of these images
+	"""
+	imagesRes = []
+	labelsRes = []
+	for image, label in zip(images, labels):
+		imagesRes.append(image)
+		labelsRes.append(label)
+		for angle in rotation:
+			imagesRes.append(rotate(image, angle, reshape=False))
+			labelsRes.append(label)
+
+	return np.array(imagesRes), np.array(labelsRes)
 
 def saveLabelsToCsv(labelsArray, fileName):
 	"""
