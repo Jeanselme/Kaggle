@@ -77,7 +77,7 @@ class ClassifierKernel(Classifier):
 		h_std = np.zeros(dim)
 
 		G_slack = np.identity(dim)
-		h_slack = np.ones(dim)
+		h_slack = np.ones(dim) * 0.01 
 
 		G = cvxopt.matrix(np.vstack((G_std, G_slack)))
 		h = cvxopt.matrix(np.hstack((h_std, h_slack)))

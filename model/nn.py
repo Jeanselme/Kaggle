@@ -52,7 +52,7 @@ class ClassifierNN(Classifier):
 		super(ClassifierNN, self).test(testData, testLabels, save)
 
 	def train(self, trainData, trainLabels, testData, testLabels,
-		learningRate=0.001, regularization=4, batchSize=100, probabilistic=True,
+		learningRate=0.001, regularization=1, batchSize=100, probabilistic=True,
 		iteration=1000, testTime=1,b1 = 0.9, b2 = 0.999, b3 = 0.999, epsilon = 10**(-8),
 		k = 0.1, K = 10):
 		"""
@@ -137,9 +137,9 @@ class ClassifierNN(Classifier):
 					oldLoss = loss
 
 				# Update weights and biases of each neuron
-				self.weights = [self.weights[i] - learningRate*(np.multiply(mh[i],1/(d*np.sqrt(vh[i]) + epsilon)) + regularization*self.weights[i])
+				self.weights = [self.weights[i] - learningRate/d*(np.multiply(mh[i],1/(np.sqrt(vh[i]) + epsilon)) + regularization*self.weights[i])
 									for i in range(len(totalDiffWeight))]
-				self.biases = [self.biases[i] - learningRate*(mbh[i]/(d*np.sqrt(vbh[i]) + epsilon))
+				self.biases = [self.biases[i] - learningRate/d*(mbh[i]/(np.sqrt(vbh[i]) + epsilon))
 									for i in range(len(totalDiffBias))]
 
 			# Test performances
