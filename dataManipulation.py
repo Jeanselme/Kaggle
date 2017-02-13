@@ -34,7 +34,7 @@ def extractLabelsFromCSV(csvFile):
 	"""
 	return pandas.read_csv(csvFile)["Prediction"].as_matrix()
 
-def addRotations(images, labels, rotation=[-15,15]):
+def addRotations(images, labels, rotation=[-30,-15,-10,-5,5,10,15,30]):
 	"""
 	Returns the list of initial images with different rotations of these images
 	"""
@@ -59,6 +59,14 @@ def saveLabelsToCsv(labelsArray, fileName):
 	df['Prediction'] = labelsArray
 
 	# Saves the data
+	df.to_csv(fileName, index = False)
+
+def saveImagesToCsv(imagesArray, fileName):
+	"""
+	Saves images in the csvFile
+	"""
+	flattenImage = [image.flatten() for image in imagesArray]
+	df = pandas.DataFrame(flattenImage)
 	df.to_csv(fileName, index = False)
 
 def shuffleDataLabel(dataArray, labelsArray):
